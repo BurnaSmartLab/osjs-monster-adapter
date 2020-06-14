@@ -4,94 +4,71 @@ For more information about vfs adapters, visit:
 - https://manual.os-js.org/v3/guide/filesystem/
 - https://manual.os-js.org/v3/development/
 */
+const path = require('path')
+
 const Monster = require('./src/Monster');
-var http = require('http');
-const fetch = require('node-fetch')
 
-const mapFile = (containers) => item => ({
-    isDirectory: true,
-    isFile: false,
-    filename: item.name,
-    path: item.name
-})
+////check if path is at mountpoint
+const checkMountPoint = dir => dir.split(':/').splice(1).join(':/')
+
+
+///get container name
+const containerName = dir => dir.split('/').splice(1,1)
+
 const readdir = (monster, mon) => {
-    console.log(mon.x_storage_token)
-    console.log(mon.x_storage_url)
-    /// http
-    /*let options = {
-        host: 'localhost',
-        path: '/v1/AUTH_test',
-        headers: {'X-Auth-Token': 'AUTH_tkfc92ea092346426990df0207c66194c3','Accept': 'application/json'},
-        //since we are listening on a custom port, we need to specify it by hand
-        port: '12345',
-        //This is what changes the request to a POST request
-        method: 'GET'
-    };
 
-    callback = function(response) {
-        var str = ''
-        response.on('data', function (chunk) {
-            str += chunk;
+    /////if checkMountPoint be empty it show us we are at root and need call accountDetails api
+    ////else we must list a contaienr objects or objects in a folder
+    if (checkMountPoint(monster) === '') {
+        return mon.accountDetails('application/json').then(result => {
+            if (result.status === 200) {
+                return JSON.parse(result.message).map(container => ({
+                    isDirectory: true,
+                    isFile: false,
+                    filename: container.name,
+                    path: monster + container.name,
+                    mime: null,
+                    size: container.bytes
+                }))
+            } else {
+                return []
+            }
         });
-
-        response.on('end', function () {
-            let test = JSON.parse(str).map(container => ({
-                isDirectory: true,
-                isFile: false,
-                filename: container.name,
-                path: monster + container.name,
-                mime: null,
-                size: container.bytes
-            }))
-            console.log(test)
+    } else {
+        return mon.getContainerObjectDetails(containerName(monster), 'application/json', 'swift-ui2/').then(result => {
+            if (result.status === 200) {
+                console.log(result.message)
+                return JSON.parse(result.message).map(file => {
+                    if(file.subdir){
+                        return {
+                            isDirectory: true,
+                            isFile: false,
+                            filename: file.subdir,
+                            path: monster + '/' + file.subdir,
+                            mime: null
+                        }
+                    }else {
+                        return {
+                            isDirectory: false,
+                            isFile: true,
+                            filename: path.basename(file.name),
+                            path: monster + '/' + file.name,
+                            mime: file.content_type,
+                            size: file.bytes
+                        }
+                    }
+                })
+            } else {
+                return []
+            }
         });
     }
 
-    var req = http.request(options, callback);
-    req.end()*/
-
-    return (async () => {
-        try {
-            const response = await fetch("http://127.0.0.1:12345/v1/AUTH_test",{headers:{
-                    'X-Auth-Token': 'AUTH_tkfc92ea092346426990df0207c66194c3',
-                    'Accept': 'application/json'
-                }});
-            const containers = await response.json();
-            const test = await containers.map(container => ({
-                isDirectory: true,
-                isFile: false,
-                filename: container.name,
-                path: monster + container.name,
-                mime: null,
-                size: container.bytes
-            }))
-            return test
-        } catch (error) {
-            return [];
-        }
-    })()
-
-    /*return mon.accountDetails('application/json').then(result => {
-        if (result.status === 200){
-            console.log(result.message)
-            return JSON.parse(result.message).map(container => ({
-                isDirectory: true,
-                isFile: false,
-                filename: container.name,
-                path: monster + container.name,
-                mime: null,
-                size: container.bytes
-            }))
-        }
-        else {
-            console.log(result)
-            return []
-        }
-    });*/
 }
 module.exports = (core) => {
     const mon = new Monster("http://localhost:12345/auth/v1.0")
     mon.login('test:tester', 'testing')
+    core.on('osjs/core:destroy', () => mon.destroy());
     return {
         readdir: vfs => (monster) => readdir(monster, mon)
         // readdir: vfs => (path) => Promise.resolve([{
