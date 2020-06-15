@@ -4,16 +4,27 @@ For more information about vfs adapters, visit:
 - https://manual.os-js.org/v3/guide/filesystem/
 - https://manual.os-js.org/v3/development/
 */
+
+/*
+* TODO: Code refactoring
+*
+* */
 const path = require('path')
 
 const Monster = require('./src/Monster');
 
-////check if path is at mountpoint
+////check if path is at mountpoint(root)
 const checkMountPoint = dir => dir.split(':/').splice(1).join(':/')
 
 
 ///get container name
-const containerName = dir => dir.split('/').splice(1,1)
+const containerName = dir => dir.split('/').splice(1,1)[0]
+
+///get directory name from root path
+const prefix = dir => dir.split('/').splice(2).join('/')
+
+//keep path from pount point to container name
+const clearPath = dir => dir.split('/').splice(0,2).join('/')
 
 const readdir = (monster, mon) => {
 
@@ -35,16 +46,15 @@ const readdir = (monster, mon) => {
             }
         });
     } else {
-        return mon.getContainerObjectDetails(containerName(monster), 'application/json', 'swift-ui2/').then(result => {
+        return mon.getContainerObjectDetails(containerName(monster), 'application/json', prefix(monster)).then(result => {
             if (result.status === 200) {
-                console.log(result.message)
                 return JSON.parse(result.message).map(file => {
                     if(file.subdir){
                         return {
                             isDirectory: true,
                             isFile: false,
-                            filename: file.subdir,
-                            path: monster + '/' + file.subdir,
+                            filename: path.basename(file.subdir),
+                            path: clearPath(monster) + '/' + file.subdir,
                             mime: null
                         }
                     }else {
@@ -52,7 +62,7 @@ const readdir = (monster, mon) => {
                             isDirectory: false,
                             isFile: true,
                             filename: path.basename(file.name),
-                            path: monster + '/' + file.name,
+                            path: clearPath(monster) + '/' + file.name,
                             mime: file.content_type,
                             size: file.bytes
                         }
@@ -68,7 +78,7 @@ const readdir = (monster, mon) => {
 module.exports = (core) => {
     const mon = new Monster("http://localhost:12345/auth/v1.0")
     mon.login('test:tester', 'testing')
-    core.on('osjs/core:destroy', () => mon.destroy());
+
     return {
         readdir: vfs => (monster) => readdir(monster, mon)
         // readdir: vfs => (path) => Promise.resolve([{
