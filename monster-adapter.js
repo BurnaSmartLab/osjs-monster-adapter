@@ -47,7 +47,16 @@ const readdir = (monster, mon) => {
     } else {
         return mon.getContainerObjectDetails(containerName(monster), 'application/json', prefix(monster)).then(result => {
             if (result.status === 200) {
-                return JSON.parse(result.message).map(file => {
+                /*
+                * first compute subdir sub list
+                * then remove object that has same name with subdir object's name with 'application/content-type' content-type
+                * at last map object to OS.js object
+                * */
+                let subdir = JSON.parse(result.message).filter(file => file.subdir)
+                let clearedObjects = JSON.parse(result.message).filter(file => !subdir.some(value =>
+                    ((typeof file.subdir === 'undefined') && (file.content_type === 'application/directory') && (value.subdir === `${file.name}/`)))
+                )
+                return clearedObjects.map(file => {
                     if (file.subdir) {
                         return {
                             isDirectory: true,
@@ -61,8 +70,8 @@ const readdir = (monster, mon) => {
                             isDirectory: file.content_type === 'application/directory',
                             isFile: file.content_type !== 'application/directory',
                             filename: path.basename(file.name),
-                            path: file.content_type !== 'application/directory'?clearPath(monster) + '/' + file.name:clearPath(monster) + '/' + file.name+'/',
-                            mime: file.content_type !== 'application/directory'? file.content_type: null,
+                            path: file.content_type !== 'application/directory' ? clearPath(monster) + '/' + file.name : clearPath(monster) + '/' + file.name + '/',
+                            mime: file.content_type !== 'application/directory' ? file.content_type : null,
                             size: file.bytes
                         }
                     }
