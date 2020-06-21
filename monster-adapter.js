@@ -10,9 +10,10 @@ For more information about vfs adapters, visit:
 *
 * */
 const path = require('path')
-
-const Monster = require('./src/Monster');
-
+const {Readable} = require('stream')
+const Monster = require('./src/Monster')
+// const FileReader = require('filereader')
+var fs = require('fs');
 ////check if path is at mountpoint(root)
 const checkMountPoint = dir => dir.split(':/').splice(1).join(':/')
 
@@ -48,6 +49,7 @@ const readdir = (monster, mon) => {
         return mon.getContainerObjectDetails(containerName(monster), 'application/json', prefix(monster)).then(result => {
             if (result.status === 200) {
                 /*
+                * DESCRIPTION:
                 * first compute subdir sub list
                 * then remove object that has same name with subdir object's name with 'application/content-type' content-type
                 * at last map object to OS.js object
@@ -108,6 +110,23 @@ const mkdir = (monster, mon) => {
     }
 }
 
+const readfile = (monster, mon) => {
+    return mon.getObjectContent(containerName(monster), path.basename(monster)).then(result => {
+        if (result.status === 200) {
+            if (result.content_type.includes('image')){
+                const readable = Readable.from(Buffer.from(result.message).toString("binary"))
+                return readable.on('end', chunk => chunk)
+            }else {
+                const readable = Readable.from(result.message)
+                return readable.on('end', chunk => chunk)
+            }
+
+        } else {
+            return `Error: ${result.status}`
+        }
+    });
+}
+
 module.exports = (core) => {
     const mon = new Monster("http://localhost:12345/auth/v1.0")
     mon.login('test:tester', 'testing')
@@ -115,6 +134,7 @@ module.exports = (core) => {
     return {
         readdir: vfs => (monster) => readdir(monster, mon),
         mkdir: vfs => (monster) => mkdir(monster, mon),
+        readfile: vfs => (monster) => readfile(monster,mon)
         // readdir: vfs => (path) => Promise.resolve([{
         //     path:'milad',
         //     isDirectory:true,
