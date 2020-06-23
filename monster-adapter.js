@@ -11,9 +11,9 @@ For more information about vfs adapters, visit:
 * */
 const path = require('path')
 const {Readable} = require('stream')
+const fs = require('fs')
+
 const Monster = require('./src/Monster')
-// const FileReader = require('filereader')
-var fs = require('fs');
 ////check if path is at mountpoint(root)
 const checkMountPoint = dir => dir.split(':/').splice(1).join(':/')
 
@@ -24,8 +24,17 @@ const containerName = dir => dir.split('/').splice(1, 1)[0]
 ///get directory name from root path
 const prefix = dir => dir.split('/').splice(2).join('/')
 
-//keep path from pount point to container name
+///change mountpoint:/containername/object To /containername/object
+const pathFromContainer = dir => dir.split(':').splice(1).join(':')
+
+//keep path from mount point to container name
 const clearPath = dir => dir.split('/').splice(0, 2).join('/')
+
+//checking the current path to be in container list or not
+const isContainerList = dir => dir.split('/').length === 2
+
+///get object name
+const objectName = dir => path.basename(dir)
 
 const readdir = (monster, mon) => {
     /////if checkMountPoint be empty it show us we are at root and need call accountDetails api
@@ -38,8 +47,11 @@ const readdir = (monster, mon) => {
                     isFile: false,
                     filename: container.name,
                     path: monster + container.name,
-                    mime: null,
-                    size: container.bytes
+                    mime: 'container',
+                    size: container.bytes,
+                    stat: {
+                        mtime: container.last_modified
+                    }
                 }))
             } else {
                 return []
@@ -63,7 +75,7 @@ const readdir = (monster, mon) => {
                         return {
                             isDirectory: true,
                             isFile: false,
-                            filename: path.basename(file.subdir),
+                            filename: objectName(file.subdir),
                             path: clearPath(monster) + '/' + file.subdir,
                             mime: null
                         }
@@ -71,10 +83,13 @@ const readdir = (monster, mon) => {
                         return {
                             isDirectory: file.content_type === 'application/directory',
                             isFile: file.content_type !== 'application/directory',
-                            filename: path.basename(file.name),
+                            filename: objectName(file.name),
                             path: file.content_type !== 'application/directory' ? clearPath(monster) + '/' + file.name : clearPath(monster) + '/' + file.name + '/',
                             mime: file.content_type !== 'application/directory' ? file.content_type : null,
-                            size: file.bytes
+                            size: file.bytes,
+                            stat: {
+                                mtime: file.last_modified
+                            }
                         }
                     }
                 })
@@ -99,32 +114,78 @@ const mkdir = (monster, mon) => {
     * */
 
     const container = containerName(monster)
-    if (monster.split('/').length === 2) {
+    if (isContainerList(monster)) {
         mon.createContainer(container)
     } else {
         let metadatas = new Map()
         metadatas.set("Content-Type", "application/directory")
-        let test = monster.split('/').splice(2).join('/')
-        console.log(test)
-        mon.createObject(container, monster.split('/').splice(2).join('/'), metadatas)
+        mon.createObject(container, monster.split('/').splice(2).join('/'), metadatas);
     }
 }
 
-const readfile = (monster, mon) => {
-    return mon.getObjectContent(containerName(monster), path.basename(monster)).then(result => {
-        if (result.status === 200) {
-            if (result.content_type.includes('image')){
-                const readable = Readable.from(Buffer.from(result.message).toString("binary"))
-                return readable.on('end', chunk => chunk)
-            }else {
+const readfile = (monster, options, mon) => {
+    if (!options.hasOwnProperty('download')) {
+        return mon.getObjectContent(containerName(monster), objectName(monster)).then(result => {
+            if (result.status === 200) {
                 const readable = Readable.from(result.message)
                 return readable.on('end', chunk => chunk)
+            } else {
+                return `Error: ${result.status}`
             }
+        });
+    } else if (options.download) {
+        return mon.getObjectContent(containerName(monster), objectName(monster)).then(result => {
+            return result.message
+        });
+    }
+}
 
-        } else {
-            return `Error: ${result.status}`
-        }
-    });
+const unlink = (monster, mon) => {
+    /*
+   * DESCRIPTION:
+   * this function delete container or directory according to path.
+   *
+   * example 1: myMonster:/newDirectory is at container position we must delete 'newDirectory'
+   *
+   * example 2: myMonster:/newDirectory/someObject is in 'newDirectory' container and we must delete 'someObject    '
+   * */
+
+    const container = containerName(monster)
+    if (isContainerList(monster)) {
+        mon.removeContainer(container)
+    } else {
+        mon.removeObject(container, objectName(monster))
+    }
+}
+
+const copy = (from, to, mon) => {
+    /*
+   * DESCRIPTION:
+   * this function copy object from source to destination.
+   *
+   * example: copy someObject.obj in myMonster:/container1/some/Path/someObject.obj to myMonster:/container2/some/Path/someObject.obj
+   * */
+
+    if (!(isContainerList(from) && isContainerList(to))) {
+        return mon.copyObject(pathFromContainer(from), pathFromContainer(to)).then(result=>result.status === 201)
+    }
+}
+
+const rename = (from, to, mon) => {
+    /*
+   * DESCRIPTION:
+   * this function move object from source to destination.
+   *
+   * example: copy someObject.obj in myMonster:/container1/some/Path/someObject.obj to myMonster:/container2/some/Path/someObject.obj
+   * */
+
+    if (!(isContainerList(from) && isContainerList(to))) {
+        return mon.copyObject(pathFromContainer(from), pathFromContainer(to)).then(result =>{
+            if (result.status===201){
+                return mon.removeObject(containerName(from),objectName(from)).then(rmResult => rmResult.status === 204)
+            }
+        })
+    }
 }
 
 module.exports = (core) => {
@@ -134,7 +195,10 @@ module.exports = (core) => {
     return {
         readdir: vfs => (monster) => readdir(monster, mon),
         mkdir: vfs => (monster) => mkdir(monster, mon),
-        readfile: vfs => (monster) => readfile(monster,mon)
+        readfile: vfs => (monster, options) => readfile(monster, options, mon),
+        unlink: vfs => (monster) => unlink(monster, mon),
+        copy: vfs => (from, to) => copy(from, to, mon),
+        rename: vfs => (from, to) => rename(from, to, mon),
         // readdir: vfs => (path) => Promise.resolve([{
         //     path:'milad',
         //     isDirectory:true,
