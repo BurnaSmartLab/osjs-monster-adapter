@@ -58,7 +58,7 @@ const readdir = (monster, mon) => {
             }
         });
     } else {
-        return mon.getContainerObjectDetails(containerName(monster), 'application/json', prefix(monster)).then(result => {
+        return mon.getContainerObjectDetails(containerName(monster), 'application/json', '/', prefix(monster)).then(result => {
             if (result.status === 200) {
                 /*
                 * DESCRIPTION:
@@ -140,6 +140,22 @@ const readfile = (monster, options, mon) => {
     }
 }
 
+const writefile = (monster, options, mon) => {
+    if (!isContainerList(monster)) {
+        /*let metadatas = new Map()
+        metadatas.set("Content-Type", "application/directory")
+        mon.createObject(containerName(monster), monster.split('/').splice(2).join('/'), metadatas);*/
+        console.log('monster ' + monster)
+        console.log('options ' + JSON.stringify(options, undefined, 2))
+    } else {
+        console.log('You are container directory')
+    }
+
+    /*let metadatas = new Map()
+    metadatas.set("Content-Type", "application/directory")
+    mon.createObject(container, monster.split('/').splice(2).join('/'), metadatas);*/
+}
+
 const unlink = (monster, mon) => {
     /*
    * DESCRIPTION:
@@ -154,7 +170,30 @@ const unlink = (monster, mon) => {
     if (isContainerList(monster)) {
         mon.removeContainer(container)
     } else {
-        mon.removeObject(container, objectName(monster))
+        let objectPath
+        if (monster.slice(-1) === '/') {
+            return (async () => {
+                //get sub objects of object we want delete it.
+                let objects = await mon.getContainerObjectDetails(containerName(monster), 'application/json', '', prefix(monster)).then(
+                    result => JSON.parse(result.message).map(object => object.name))
+
+                if (objects.length > 0) {
+                    //sort object by path length
+                    objects.sort((a, b) => b.split('/').length - a.split('/').length)
+
+                    //remove each object in array
+                    for (let i = 0; i < objects.length; i++) {
+                        mon.removeObject(container, objects[i]).then(result => console.log(result))
+                    }
+                }
+                //remove '/' from end of directory we decide to delete it.
+                objectPath = prefix(monster).slice(0, -1)
+                mon.removeObject(container, objectPath).then(result => console.log(result))
+            })();
+        } else {
+            objectPath = prefix(monster)
+            return mon.removeObject(container, objectPath).then(result => console.log(result))
+        }
     }
 }
 
@@ -167,11 +206,11 @@ const copy = (from, to, mon) => {
    * */
 
     if (!(isContainerList(from) && isContainerList(to))) {
-        return mon.copyObject(pathFromContainer(from), pathFromContainer(to)).then(result=>result.status === 201)
+        return mon.copyObject(pathFromContainer(from), pathFromContainer(to)).then(result => result.status === 201)
     }
 }
 
-const rename = (from, to, mon) => {
+const rename = (from, to, options, mon) => {
     /*
    * DESCRIPTION:
    * this function move object from source to destination.
@@ -180,9 +219,9 @@ const rename = (from, to, mon) => {
    * */
 
     if (!(isContainerList(from) && isContainerList(to))) {
-        return mon.copyObject(pathFromContainer(from), pathFromContainer(to)).then(result =>{
-            if (result.status===201){
-                return mon.removeObject(containerName(from),objectName(from)).then(rmResult => rmResult.status === 204)
+        return mon.copyObject(pathFromContainer(from), pathFromContainer(to)).then(result => {
+            if (result.status === 201) {
+                return mon.removeObject(containerName(from), objectName(from)).then(rmResult => rmResult.status === 204)
             }
         })
     }
@@ -196,9 +235,11 @@ module.exports = (core) => {
         readdir: vfs => (monster) => readdir(monster, mon),
         mkdir: vfs => (monster) => mkdir(monster, mon),
         readfile: vfs => (monster, options) => readfile(monster, options, mon),
+        writefile: vfs => (monster, options) => writefile(monster, options, mon),
         unlink: vfs => (monster) => unlink(monster, mon),
         copy: vfs => (from, to) => copy(from, to, mon),
-        rename: vfs => (from, to) => rename(from, to, mon),
+        rename: vfs => (from, to, options) => rename(from, to, options, mon),
+
         // readdir: vfs => (path) => Promise.resolve([{
         //     path:'milad',
         //     isDirectory:true,
