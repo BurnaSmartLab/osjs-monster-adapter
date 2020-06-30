@@ -125,19 +125,7 @@ const mkdir = (monster, mon) => {
 }
 
 const readfile = (monster, options, mon) => {
-    return mon.getObjectContent(containerName(monster), objectName(monster)).then(result => {
-        if (result.status === 200) {
-            ////just for testing stream. It works
-            //return  fs.createReadStream('/home/milad/Downloads/go-home.fbe6deea.png')
-
-            ///// My plan for create stream that doesn't work. must be fixed
-            let chunks = new Stream()
-            let readable = Readable.from(result.message)
-            return readable.on('data', (chunk) => chunks.push(chunk)).once('end', (chunks) => chunks)
-        } else {
-            return `Error: ${result.status}`
-        }
-    });
+    return mon.getObjectContent(containerName(monster), objectName(monster)).then(result => result.message);
 }
 
 const writefile = (monster, options, mon) => {
