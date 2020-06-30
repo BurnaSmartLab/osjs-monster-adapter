@@ -11,6 +11,7 @@ For more information about vfs adapters, visit:
 * */
 const path = require('path')
 const {Readable} = require('stream')
+const Stream = require('stream').Transform
 const fs = require('fs')
 
 const Monster = require('./src/Monster')
@@ -124,31 +125,26 @@ const mkdir = (monster, mon) => {
 }
 
 const readfile = (monster, options, mon) => {
-    if (!options.hasOwnProperty('download')) {
-        return mon.getObjectContent(containerName(monster), objectName(monster)).then(result => {
-            if (result.status === 200) {
-                const readable = Readable.from(result.message)
-                return readable.on('end', chunk => chunk)
-            } else {
-                return `Error: ${result.status}`
-            }
-        });
-    } else if (options.download) {
-        return mon.getObjectContent(containerName(monster), objectName(monster)).then(result => {
-            return result.message
-        });
-    }
+    return mon.getObjectContent(containerName(monster), objectName(monster)).then(result => {
+        if (result.status === 200) {
+            ////just for testing stream. It works
+            //return  fs.createReadStream('/home/milad/Downloads/go-home.fbe6deea.png')
+
+            ///// My plan for create stream that doesn't work. must be fixed
+            let chunks = new Stream()
+            let readable = Readable.from(result.message)
+            return readable.on('data', (chunk) => chunks.push(chunk)).once('end', (chunks) => chunks)
+        } else {
+            return `Error: ${result.status}`
+        }
+    });
 }
 
 const writefile = (monster, options, mon) => {
+    let headers = new Map();
+    headers.push()
     if (!isContainerList(monster)) {
-        /*let metadatas = new Map()
-        metadatas.set("Content-Type", "application/directory")
-        mon.createObject(containerName(monster), monster.split('/').splice(2).join('/'), metadatas);*/
-        console.log('monster ' + monster)
-        console.log('options ' + JSON.stringify(options, undefined, 2))
-    } else {
-        console.log('You are container directory')
+        return mon.createObject(containerName(monster), prefix(monster)).then(result => console.log(result));
     }
 
     /*let metadatas = new Map()
