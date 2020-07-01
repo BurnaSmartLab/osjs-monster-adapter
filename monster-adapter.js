@@ -130,9 +130,10 @@ const readfile = (monster, options, mon) => {
 
 const writefile = (monster, options, mon) => {
     let headers = new Map();
-    headers.push()
+    headers.set('')
+    //  console.log(`options: ${JSON.stringify(options,undefined,2)}`)
     if (!isContainerList(monster)) {
-        return mon.createObject(containerName(monster), prefix(monster)).then(result => console.log(result));
+        return mon.createObject(containerName(monster), prefix(monster), options.path).then(result => console.log(result));
     }
 
     /*let metadatas = new Map()
