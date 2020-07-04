@@ -102,8 +102,7 @@ const readdir = (monster, mon) => {
 
 }
 
-const mkdir = (monster, mon) => {
-    /*
+/*
     * DESCRIPTION:
     * this function create container or directory according to path.
     *
@@ -113,7 +112,7 @@ const mkdir = (monster, mon) => {
     * example 2: myMonster:/newDirectory/somDirectory is in 'newDirectory' container and we must add 'someDirectory' as
     * a directory of container
     * */
-
+const mkdir = (monster, mon) => {
     const container = containerName(monster)
     if (isContainerList(monster)) {
         mon.createContainer(container)
@@ -128,40 +127,32 @@ const readfile = (monster, options, mon) => {
     return mon.getObjectContent(containerName(monster), objectName(monster)).then(result => result.message);
 }
 
-const writefile = (vfs,mon) => (path, data, options) => {
-    //  console.log(`options: ${JSON.stringify(options,undefined,2)}`)
+const writefile = (vfs, mon) => (path, data, options) => {
     if (isContainerList(path)) {
         return Promise.reject(new Error('Invalid destination (You can not upload in container list)'));
     }
-
     return mon.createObject(containerName(path), prefix(path), data).then(result => console.log(result));
-
-    /*let metadatas = new Map()
-    metadatas.set("Content-Type", "application/directory")
-    mon.createObject(container, monster.split('/').splice(2).join('/'), metadatas);*/
 }
 
+/*
+  * DESCRIPTION:
+  * this function delete container or directory according to path.
+  *
+  * example 1: myMonster:/newDirectory is at container position we must delete 'newDirectory'
+  *
+  * example 2: myMonster:/newDirectory/someObject is in 'newDirectory' container and we must delete 'someObject'
+* */
 const unlink = (monster, mon) => {
-    /*
-   * DESCRIPTION:
-   * this function delete container or directory according to path.
-   *
-   * example 1: myMonster:/newDirectory is at container position we must delete 'newDirectory'
-   *
-   * example 2: myMonster:/newDirectory/someObject is in 'newDirectory' container and we must delete 'someObject    '
-   * */
-
     const container = containerName(monster)
     if (isContainerList(monster)) {
         mon.removeContainer(container)
     } else {
         let objectPath
-        if (monster.slice(-1) === '/') {
-            return (async () => {
+        return (async () => {
+            if (monster.slice(-1) === '/') {
                 //get sub objects of object we want delete it.
                 let objects = await mon.getContainerObjectDetails(containerName(monster), 'application/json', '', prefix(monster)).then(
                     result => JSON.parse(result.message).map(object => object.name))
-
                 if (objects.length > 0) {
                     //sort object by path length
                     objects.sort((a, b) => b.split('/').length - a.split('/').length)
@@ -174,42 +165,95 @@ const unlink = (monster, mon) => {
                 //remove '/' from end of directory we decide to delete it.
                 objectPath = prefix(monster).slice(0, -1)
                 mon.removeObject(container, objectPath).then(result => console.log(result))
-            })();
-        } else {
-            objectPath = prefix(monster)
-            return mon.removeObject(container, objectPath).then(result => console.log(result))
-        }
+            } else {
+                objectPath = prefix(monster)
+                mon.removeObject(container, objectPath).then(result => console.log(result))
+            }
+        })();
     }
 }
 
-const copy = (from, to, mon) => {
-    /*
+/*
    * DESCRIPTION:
    * this function copy object from source to destination.
    *
    * example: copy someObject.obj in myMonster:/container1/some/Path/someObject.obj to myMonster:/container2/some/Path/someObject.obj
    * */
-
-    if (!(isContainerList(from) && isContainerList(to))) {
-        return mon.copyObject(pathFromContainer(from), pathFromContainer(to)).then(result => result.status === 201)
+const copy = (from, to, mon) => {
+    if (isContainerList(from)) {
+        return Promise.reject(new Error('Invalid source (You can not COPY a container)'));
+    } else if (isContainerList(to)) {
+        return Promise.reject(new Error('Invalid destination (You can not COPY in container list)'));
     }
+
+    let sourcePath = pathFromContainer(from)
+    let destinationPath = pathFromContainer(to)
+    return (async () => {
+        if (from.slice(-1) === '/') {
+            let fromContainerName = containerName(from)
+            //get sub objects of object we want delete it.
+            let objects = await mon.getContainerObjectDetails(fromContainerName, 'application/json', '', prefix(from)).then(
+                result => JSON.parse(result.message).map(object => `/${fromContainerName}/${object.name}`))
+
+            //slice(0,-1) removes '/' from end of directory we decide to delete it.
+            //mon.copyObject(pathFromContainer(from).slice(0, -1), pathFromContainer(to)).then(result => console.log(result))
+            if (objects.length > 0) {
+                //sort object by path length
+                objects.sort((a, b) => a.split('/').length - b.split('/').length)
+                console.log(objects)
+                //copy each object in array
+                for (let i = 0; i < objects.length; i++) {
+                    ///returns path where object must bu copied in destination
+                    let exentionPath = objects[i].split(sourcePath).splice(1)
+                    mon.copyObject(objects[i], `${destinationPath}/${exentionPath}`).then(result => console.log(result))
+                }
+            }
+        } else {
+            mon.copyObject(sourcePath, destinationPath).then(result => result)
+        }
+    })();
 }
 
+/*
+  * DESCRIPTION:
+  * this function move object from source to destination.
+  *
+  * example: copy someObject.obj in myMonster:/container1/some/Path/someObject.obj to myMonster:/container2/some/Path/someObject.obj
+  * */
 const rename = (from, to, options, mon) => {
-    /*
-   * DESCRIPTION:
-   * this function move object from source to destination.
-   *
-   * example: copy someObject.obj in myMonster:/container1/some/Path/someObject.obj to myMonster:/container2/some/Path/someObject.obj
-   * */
+    return (async () => {
+        if (from.slice(-1) === '/') {
+            let fromContainerName = containerName(from)
+            //get sub objects of object we want delete it.
+            let objects = await mon.getContainerObjectDetails(fromContainerName, 'application/json', '', prefix(from)).then(
+                result => JSON.parse(result.message).map(object => `/${fromContainerName}/${object.name}`))
 
-    if (!(isContainerList(from) && isContainerList(to))) {
+            //slice(0,-1) removes '/' from end of directory we decide to delete it.
+            //mon.copyObject(pathFromContainer(from).slice(0, -1), pathFromContainer(to)).then(result => console.log(result))
+            if (objects.length > 0) {
+                //sort object by path length
+                objects.sort((a, b) => a.split('/').length - b.split('/').length)
+                console.log(objects)
+                //copy each object in array
+                for (let i = 0; i < objects.length; i++) {
+                    ///returns path where object must bu copied in destination
+                    let exentionPath = objects[i].split(sourcePath).splice(1)
+                    mon.copyObject(objects[i], `${destinationPath}/${exentionPath}`).then(result => console.log(result))
+                }
+            }
+        } else {
+            mon.copyObject(sourcePath, destinationPath).then(result => result)
+        }
+        unlink(from,mon)
+    })();
+
+    /*if (!(isContainerList(from) && isContainerList(to))) {
         return mon.copyObject(pathFromContainer(from), pathFromContainer(to)).then(result => {
             if (result.status === 201) {
                 return mon.removeObject(containerName(from), objectName(from)).then(rmResult => rmResult.status === 204)
             }
         })
-    }
+    }*/
 }
 
 module.exports = (core) => {
