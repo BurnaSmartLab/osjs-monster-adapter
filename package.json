@@ -1,0 +1,22 @@
+{
+  "name": "monster-adapter",
+  "version": "1.0.0",
+  "description": "An Adapter written for os.js to work with monster filesystem",
+  "main": "monster-adapter.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://opengit.ir/smartlab/hafez/monster-adapter"
+  },
+  "keywords": [
+    "adapter",
+    "os.js",
+    "monster",
+    "vfs"
+  ],
+  "author": "Seyed Milad Hashemi",
+  "license": "ISC",
+  "dependencies": {}
+}

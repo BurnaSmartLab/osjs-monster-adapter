@@ -120,7 +120,7 @@ const mkdir = (monster, mon) => {
     } else {
         let metadatas = new Map()
         metadatas.set("Content-Type", "application/directory")
-        mon.createObject(container, monster.split('/').splice(2).join('/'), metadatas);
+        mon.createDirectory(container, monster.split('/').splice(2).join('/'), metadatas);
     }
 }
 
@@ -128,13 +128,13 @@ const readfile = (monster, options, mon) => {
     return mon.getObjectContent(containerName(monster), objectName(monster)).then(result => result.message);
 }
 
-const writefile = (monster, options, mon) => {
-    let headers = new Map();
-    headers.set('')
+const writefile = (vfs,mon) => (path, data, options) => {
     //  console.log(`options: ${JSON.stringify(options,undefined,2)}`)
-    if (!isContainerList(monster)) {
-        return mon.createObject(containerName(monster), prefix(monster), options.path).then(result => console.log(result));
+    if (isContainerList(path)) {
+        return Promise.reject(new Error('Invalid destination (You can not upload in container list)'));
     }
+
+    return mon.createObject(containerName(path), prefix(path), data).then(result => console.log(result));
 
     /*let metadatas = new Map()
     metadatas.set("Content-Type", "application/directory")
@@ -220,7 +220,8 @@ module.exports = (core) => {
         readdir: vfs => (monster) => readdir(monster, mon),
         mkdir: vfs => (monster) => mkdir(monster, mon),
         readfile: vfs => (monster, options) => readfile(monster, options, mon),
-        writefile: vfs => (monster, options) => writefile(monster, options, mon),
+        writefile: vfs => writefile(vfs, mon),
+        //writefile: vfs => (monster, options) => writefile(monster, options, mon),
         unlink: vfs => (monster) => unlink(monster, mon),
         copy: vfs => (from, to) => copy(from, to, mon),
         rename: vfs => (from, to, options) => rename(from, to, options, mon),
