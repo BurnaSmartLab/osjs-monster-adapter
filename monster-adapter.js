@@ -143,34 +143,36 @@ const writefile = (vfs, mon) => (path, data, options) => {
   * example 2: myMonster:/newDirectory/someObject is in 'newDirectory' container and we must delete 'someObject'
 * */
 const unlink = (monster, mon) => {
-    const container = containerName(monster)
-    if (isContainerList(monster)) {
-        mon.removeContainer(container)
-    } else {
+    return (async () => {
         let objectPath
-        return (async () => {
-            if (monster.slice(-1) === '/') {
-                //get sub objects of object we want delete it.
-                let objects = await mon.getContainerObjectDetails(containerName(monster), 'application/json', '', prefix(monster)).then(
-                    result => JSON.parse(result.message).map(object => object.name))
-                if (objects.length > 0) {
-                    //sort object by path length
-                    objects.sort((a, b) => b.split('/').length - a.split('/').length)
-
-                    //remove each object in array
-                    for (let i = 0; i < objects.length; i++) {
-                        mon.removeObject(container, objects[i]).then(result => console.log(result))
+        let container = containerName(monster)
+        let isContainer = isContainerList(monster)
+        if ((monster.slice(-1) === '/') || isContainer) {
+            //get sub objects of object we want delete it.
+            await mon.getContainerObjectDetails(containerName(monster), 'application/json', '', prefix(monster)).then(
+                async (result) => {
+                    let objects = JSON.parse(result.message).map(object => object.name)
+                    if (objects.length > 0) {
+                        //sort object by path length
+                        //objects.sort((a, b) => b.split('/').length - a.split('/').length)
+                        //remove each object in array
+                        for (let i = 0; i < objects.length; i++) {
+                            await mon.removeObject(container, objects[i]).then(result => console.log(result))
+                        }
                     }
-                }
+                })
+            if (isContainer) {
+                return mon.removeContainer(container).then(result => console.log(result))
+            } else {
                 //remove '/' from end of directory we decide to delete it.
                 objectPath = prefix(monster).slice(0, -1)
-                mon.removeObject(container, objectPath).then(result => console.log(result))
-            } else {
-                objectPath = prefix(monster)
-                mon.removeObject(container, objectPath).then(result => console.log(result))
+                return mon.removeObject(container, objectPath).then(result => console.log(result))
             }
-        })();
-    }
+        } else {
+            objectPath = prefix(monster)
+            return mon.removeObject(container, objectPath).then(result => console.log(result))
+        }
+    })()
 }
 
 /*
@@ -244,7 +246,7 @@ const rename = (from, to, options, mon) => {
         } else {
             mon.copyObject(sourcePath, destinationPath).then(result => result)
         }
-        unlink(from,mon)
+        unlink(from, mon)
     })();
 
     /*if (!(isContainerList(from) && isContainerList(to))) {
@@ -265,7 +267,6 @@ module.exports = (core) => {
         mkdir: vfs => (monster) => mkdir(monster, mon),
         readfile: vfs => (monster, options) => readfile(monster, options, mon),
         writefile: vfs => writefile(vfs, mon),
-        //writefile: vfs => (monster, options) => writefile(monster, options, mon),
         unlink: vfs => (monster) => unlink(monster, mon),
         copy: vfs => (from, to) => copy(from, to, mon),
         rename: vfs => (from, to, options) => rename(from, to, options, mon),
