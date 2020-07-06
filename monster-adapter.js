@@ -124,7 +124,7 @@ const mkdir = (monster, mon) => {
 }
 
 const readfile = (monster, options, mon) => {
-    return mon.getObjectContent(containerName(monster), objectName(monster)).then(result => result.message);
+    return mon.getObjectContent(containerName(monster), prefix(monster)).then(result => result.message);
 }
 
 const writefile = (vfs, mon) => (path, data, options) => {
@@ -197,12 +197,9 @@ const copy = (from, to, mon) => {
             let objects = await mon.getContainerObjectDetails(fromContainerName, 'application/json', '', prefix(from)).then(
                 result => JSON.parse(result.message).map(object => `/${fromContainerName}/${object.name}`))
 
-            //slice(0,-1) removes '/' from end of directory we decide to delete it.
-            //mon.copyObject(pathFromContainer(from).slice(0, -1), pathFromContainer(to)).then(result => console.log(result))
             if (objects.length > 0) {
                 //sort object by path length
-                objects.sort((a, b) => a.split('/').length - b.split('/').length)
-                console.log(objects)
+                //objects.sort((a, b) => a.split('/').length - b.split('/').length)
                 //copy each object in array
                 for (let i = 0; i < objects.length; i++) {
                     ///returns path where object must bu copied in destination
@@ -210,8 +207,10 @@ const copy = (from, to, mon) => {
                     mon.copyObject(objects[i], `${destinationPath}/${exentionPath}`).then(result => console.log(result))
                 }
             }
+            //slice(0,-1) removes '/' from end of directory we decide to copy it.
+            return mon.copyObject(pathFromContainer(from).slice(0, -1), pathFromContainer(to)).then(result => console.log(result))
         } else {
-            mon.copyObject(sourcePath, destinationPath).then(result => result)
+            return mon.copyObject(sourcePath, destinationPath).then(result => result)
         }
     })();
 }
@@ -223,6 +222,14 @@ const copy = (from, to, mon) => {
   * example: copy someObject.obj in myMonster:/container1/some/Path/someObject.obj to myMonster:/container2/some/Path/someObject.obj
   * */
 const rename = (from, to, options, mon) => {
+    if (isContainerList(from)) {
+        return Promise.reject(new Error('Invalid source (You can not COPY a container)'));
+    } else if (isContainerList(to)) {
+        return Promise.reject(new Error('Invalid destination (You can not COPY in container list)'));
+    }
+
+    let sourcePath = pathFromContainer(from)
+    let destinationPath = pathFromContainer(to)
     return (async () => {
         if (from.slice(-1) === '/') {
             let fromContainerName = containerName(from)
@@ -230,12 +237,9 @@ const rename = (from, to, options, mon) => {
             let objects = await mon.getContainerObjectDetails(fromContainerName, 'application/json', '', prefix(from)).then(
                 result => JSON.parse(result.message).map(object => `/${fromContainerName}/${object.name}`))
 
-            //slice(0,-1) removes '/' from end of directory we decide to delete it.
-            //mon.copyObject(pathFromContainer(from).slice(0, -1), pathFromContainer(to)).then(result => console.log(result))
             if (objects.length > 0) {
                 //sort object by path length
-                objects.sort((a, b) => a.split('/').length - b.split('/').length)
-                console.log(objects)
+                //objects.sort((a, b) => a.split('/').length - b.split('/').length)
                 //copy each object in array
                 for (let i = 0; i < objects.length; i++) {
                     ///returns path where object must bu copied in destination
@@ -243,10 +247,12 @@ const rename = (from, to, options, mon) => {
                     mon.copyObject(objects[i], `${destinationPath}/${exentionPath}`).then(result => console.log(result))
                 }
             }
+            //slice(0,-1) removes '/' from end of directory we decide to copy it.
+            await mon.copyObject(pathFromContainer(from).slice(0, -1), pathFromContainer(to)).then(result => console.log(result))
         } else {
-            mon.copyObject(sourcePath, destinationPath).then(result => result)
+            await mon.copyObject(sourcePath, destinationPath).then(result => result)
         }
-        unlink(from, mon)
+        await unlink(from,mon)
     })();
 
     /*if (!(isContainerList(from) && isContainerList(to))) {
