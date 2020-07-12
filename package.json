@@ -1,14 +1,23 @@
 {
   "name": "monster-adapter",
   "version": "1.0.0",
-  "description": "An Adapter written for os.js to work with swift object storage.",
+  "description": "An Adapter for os.js to work with swift object storage.",
   "main": "index.js",
+  "files": [
+    "index.js",
+    "README.md",
+    "src/Account.js",
+    "src/Auth.js",
+    "src/Common.js",
+    "src/Container.js",
+    "src/Monster.js"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://opengit.ir/smartlab/hafez/monster-adapter"
+    "url": "git+https://opengit.ir/smartlab/hafez/monster-adapter.git"
   },
   "keywords": [
     "adapter",
@@ -19,6 +28,7 @@
     "objectStorage",
     "Swift"
   ],
+  "homepage": "https://opengit.ir/smartlab/hafez/monster-adapter/-/blob/master/README.md",
   "author": "Seyed Milad Hashemi",
   "license": "ISC",
   "dependencies": {
