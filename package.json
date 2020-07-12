@@ -1,0 +1,39 @@
+{
+  "name": "monster-adapter",
+  "version": "1.0.0",
+  "description": "An Adapter for os.js to work with swift saio object storage.",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "README.md",
+    "src/Account.js",
+    "src/Auth.js",
+    "src/Common.js",
+    "src/Container.js",
+    "src/Monster.js"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://opengit.ir/smartlab/hafez/monster-adapter.git"
+  },
+  "keywords": [
+    "adapter",
+    "os.js",
+    "monster",
+    "vfs",
+    "openstack",
+    "objectStorage",
+    "Swift"
+  ],
+  "homepage": "https://opengit.ir/smartlab/hafez/monster-adapter/-/blob/master/README.md",
+  "author": "Morteza Javan, Seyed Milad Hashemi, Morteza Biabani",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "mime": "^2.4.6",
+    "xmlhttprequest": "^1.8.0"
+  }
+}
