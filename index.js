@@ -1,14 +1,12 @@
 /*
-For more information about vfs adapters, visit:
-- https://manual.os-js.org/v3/tutorial/vfs/
-- https://manual.os-js.org/v3/guide/filesystem/
-- https://manual.os-js.org/v3/development/
-*/
-
-/*
-* TODO: Code refactoring
-*
-* */
+ * OS.js - JavaScript Swift Adapter Desktop Platform
+ *
+ * Copyright (c) 2011-2020, BurnaSmartLab <https://github.com/BurnaSmartLab>
+ * All rights reserved.
+ *
+ * @author  BurnaSmartLab <https://github.com/BurnaSmartLab>
+ * @licence Simplified BSD License
+ */
 const path = require('path')
 
 const Monster = require('./src/Monster')
