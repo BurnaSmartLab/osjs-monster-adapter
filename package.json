@@ -1,8 +1,8 @@
 {
   "name": "monster-adapter",
   "version": "1.0.0",
-  "description": "An Adapter written for os.js to work with monster filesystem",
-  "main": "monster-adapter.js",
+  "description": "An Adapter written for os.js to work with swift object storage.",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,5 +18,9 @@
   ],
   "author": "Seyed Milad Hashemi",
   "license": "ISC",
-  "dependencies": {}
+  "dependencies": {
+    "axios": "^0.19.2",
+    "mime": "^2.4.6",
+    "xmlhttprequest": "^1.8.0"
+  }
 }
