@@ -5,7 +5,7 @@ This is the SWIFT VFS (Server) Adapter for OS.js.
 ## Installation
 
 ```
-git clone https://opengit.ir/smartlab/hafez/monster-adapter.git
+git clone https://github.com/BurnaSmartLab/osjs-monster-adapter.git
 
 npm install
 
