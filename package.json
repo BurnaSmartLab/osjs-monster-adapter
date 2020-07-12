@@ -29,7 +29,7 @@
     "Swift"
   ],
   "homepage": "https://opengit.ir/smartlab/hafez/monster-adapter/-/blob/master/README.md",
-  "author": "Seyed Milad Hashemi",
+  "author": "Morteza Javan, Seyed Milad Hashemi, Morteza Biabani",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.19.2",
