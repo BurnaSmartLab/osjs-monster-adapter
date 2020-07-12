@@ -14,7 +14,10 @@
     "adapter",
     "os.js",
     "monster",
-    "vfs"
+    "vfs",
+    "openstack",
+    "objectStorage",
+    "Swift"
   ],
   "author": "Seyed Milad Hashemi",
   "license": "ISC",
