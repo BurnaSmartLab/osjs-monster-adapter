@@ -1,5 +1,5 @@
 {
-  "name": "monster-adapter",
+  "name": "@burna/osjs-monster-adapter",
   "version": "1.0.0",
   "description": "An Adapter for os.js to work with swift saio object storage.",
   "main": "index.js",
