@@ -1,7 +1,7 @@
 {
   "name": "monster-adapter",
   "version": "1.0.0",
-  "description": "An Adapter for os.js to work with swift object storage.",
+  "description": "An Adapter for os.js to work with swift saio object storage.",
   "main": "index.js",
   "files": [
     "index.js",
@@ -13,7 +13,8 @@
     "src/Monster.js"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "eslint": "eslint"
   },
   "repository": {
     "type": "git",
@@ -35,5 +36,11 @@
     "axios": "^0.19.2",
     "mime": "^2.4.6",
     "xmlhttprequest": "^1.8.0"
+  },
+  "devDependencies": {
+    "@osjs/eslint-config": "^1.1.0"
+  },
+  "eslintConfig": {
+    "extends": "@osjs/eslint-config"
   }
 }
