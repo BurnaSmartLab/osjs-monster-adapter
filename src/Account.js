@@ -30,8 +30,10 @@ module.exports = class Account {
       common.send();
     }));
   }
+};
 
   /* accountDetails(content_type = "text/plain; charset=utf-8",delimiter = '/') {
+
         let that = this
         return (async (that) => {
             console.log(that)
@@ -47,4 +49,3 @@ module.exports = class Account {
             }
         })()
     }*/
-};

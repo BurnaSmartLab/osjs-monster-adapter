@@ -5,7 +5,7 @@ This is the SWIFT VFS (Server) Adapter for OS.js.
 ## Installation
 
 ```
-git clone https://opengit.ir/smartlab/hafez/monster-adapter.git
+git clone https://github.com/BurnaSmartLab/osjs-monster-adapter.git
 
 npm install
 
@@ -37,7 +37,7 @@ Then create a mountpoint. Example using default Swift Account:
               name: 'myMonster',
               adapter: 'monster',
               attributes: {
-                  endpoint: "http://localhost:12345/auth/v1.0",
+                  endpoint: "http://127.0.0.1:8080/auth/v1.0",
                   username: "test:tester",
                   password: "testing"
               }

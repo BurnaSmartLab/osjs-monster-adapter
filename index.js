@@ -79,11 +79,11 @@ const readdir = (monster, mon) => {
     return mon.getContainerObjectDetails(containerName(monster), 'application/json', '/', prefix(monster)).then(result => {
       if (result.status === 200) {
         /*
-                * DESCRIPTION:
-                * first compute subdir sub list
-                * then remove object that has same name with subdir object's name with 'application/content-type' content-type
-                * at last map object to OS.js object
-                * */
+        * DESCRIPTION:
+        * first compute subdir sub list
+        * then remove object that has same name with subdir object's name with 'application/content-type' content-type
+        * at last map object to OS.js object
+        * */
         let subdir = JSON.parse(result.message).filter(file => file.subdir);
         let clearedObjects = JSON.parse(result.message).filter(file => !subdir.some(value =>
           ((typeof file.subdir === 'undefined') && (file.content_type === 'application/directory') && (value.subdir === `${file.name}/`)))

@@ -30,7 +30,7 @@
     "Swift",
     "saio"
   ],
-  "homepage": "https://opengit.ir/smartlab/hafez/monster-adapter/-/blob/master/README.md",
+  "homepage": "https://github.com/BurnaSmartLab/osjs-monster-adapter/blob/master/README.md",
   "author": "Morteza Javan, Seyed Milad Hashemi, Morteza Biabani",
   "license": "ISC",
   "dependencies": {
