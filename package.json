@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://opengit.ir/smartlab/hafez/monster-adapter.git"
+    "url": "git+https://github.com/BurnaSmartLab/osjs-monster-adapter.git"
   },
   "keywords": [
     "adapter",
@@ -27,7 +27,8 @@
     "vfs",
     "openstack",
     "objectStorage",
-    "Swift"
+    "Swift",
+    "saio"
   ],
   "homepage": "https://opengit.ir/smartlab/hafez/monster-adapter/-/blob/master/README.md",
   "author": "Morteza Javan, Seyed Milad Hashemi, Morteza Biabani",
