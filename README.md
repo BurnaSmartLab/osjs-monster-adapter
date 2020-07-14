@@ -1,3 +1,9 @@
+# Install Openstack Swift All in One Deployment (SAIO) using this manual:
+
+https://docs.openstack.org/swift/latest/development_saio.html
+
+
+
 # OS.js SWIFT VFS Adapter
 
 This is the SWIFT VFS (Server) Adapter for OS.js.
