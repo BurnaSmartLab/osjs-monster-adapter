@@ -1,4 +1,6 @@
-# Install Openstack Swift All in One Deployment (SAIO) using this manual:
+# Install Openstack Swift:
+
+Install Openstack Swift All in One Deployment (SAIO) using this manual:
 
 https://docs.openstack.org/swift/latest/development_saio.html
 
