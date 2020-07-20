@@ -17,6 +17,11 @@ module.exports = class Account {
           if (this.status === 200) {
             resolve({
               'status':common.status,
+              'responseHeader':{
+                'objectCount': common.getResponseHeader('X-Account-Object-Count'),
+                'bytesUsed': common.getResponseHeader('X-Account-Bytes-Used'),
+                'containerCount': common.getResponseHeader('X-Account-Container-Count'),
+              },
               'message':common.responseText
             });
           } else {
