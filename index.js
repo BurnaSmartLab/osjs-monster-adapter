@@ -57,7 +57,6 @@ const readdir = (monster, mon) => {
 // if checkMountPoint be empty it show us we are at root and need call accountDetails api
 // else we must list a contaienr objects or objects in a folder
   if (checkMountPoint(monster) === '') {
-    console.log(mon.accountDetails('application/json'));
     return mon.accountDetails('application/json').then(result => {
       if (result.status === 200) {
         return JSON.parse(result.message).map(container => ({
