@@ -25,7 +25,7 @@ There are two approach to installing **swift vfs adapter**:
 
 `npm install`
 
-#### Installing using npm dependency manager:
+#### 2. Installing using npm dependency manager:
 Just execute bellow command:
 
 `npm i @burna/osjs-monster-adapter`
