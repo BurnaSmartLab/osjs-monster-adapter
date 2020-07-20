@@ -1,30 +1,45 @@
-# Install Openstack Swift:
-
-Install Openstack Swift All in One Deployment (SAIO) using this manual:
-
-https://docs.openstack.org/swift/latest/development_saio.html
-
-
-
 # OS.js SWIFT VFS Adapter
 
 This is the SWIFT VFS (Server) Adapter for OS.js.
 
 ## Installation
+There are two approach to installing **swift vfs adapter**:
+#### 1. Installing by using source:
+1- Go to below directory:
 
-```
-git clone https://github.com/BurnaSmartLab/osjs-monster-adapter.git
+`cd src/server`
 
-npm install
+2- Create **vfs** directory:
 
-npm update
-```
+`mkdir vfs`
+
+3- Then go to **vfs** directory:
+
+`cd vfs`
+
+4- Clone adapter to this directory:
+
+`git clone https://opengit.ir/smartlab/hafez/monster-adapter.git`
+
+5- At last use bellow command to install dependency:
+
+`npm install`
+
+#### Installing using npm dependency manager:
+Just execute bellow command:
+
+`npm i @burna/osjs-monster-adapter`
 
 ## Usage
 
 ```javascript
 // src/server/index.js
+
+// If first approach for installing has used:
 const monsterAdapter = require('./vfs/monster-adapter')
+
+// If second approach for installing has used:
+// const monsterAdapter = require('@burna/osjs-monster-adapter')
 
 osjs.register(VFSServiceProvider, {
   args: {
@@ -45,7 +60,7 @@ Then create a mountpoint. Example using default Swift Account:
               name: 'myMonster',
               adapter: 'monster',
               attributes: {
-                  endpoint: "http://127.0.0.1:8080/auth/v1.0",
+                  endpoint: "http://localhost:12345/auth/v1.0",
                   username: "test:tester",
                   password: "testing"
               }
