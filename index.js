@@ -57,7 +57,6 @@ const readdir = (monster, mon) => {
 // if checkMountPoint be empty it show us we are at root and need call accountDetails api
 // else we must list a contaienr objects or objects in a folder
   if (checkMountPoint(monster) === '') {
-    console.log(mon.accountDetails('application/json'));
     return mon.accountDetails('application/json').then(result => {
       if (result.status === 200) {
         return JSON.parse(result.message).map(container => ({
@@ -267,6 +266,22 @@ const rename = (from, to, options, mon) => {
   })();
 };
 
+// returns directory or file stat
+const stat = (monster, mon) => {
+  if (checkMountPoint(monster) === '') {
+    return mon.accountDetails('application/json').then(result => {
+      if (result.status === 200) {
+        return ({
+          'objectCount': result.responseHeader.objectCount,
+          'bytesUsed': result.responseHeader.bytesUsed,
+          'containerCount': result.responseHeader.containerCount
+        });
+      } else {
+        return {};
+      }
+    });
+  }
+};
 // Makes sure we can make a request with what we have
 const before = vfs => {
   let swift = new Monster(vfs.mount.attributes.endpoint);
@@ -276,11 +291,12 @@ const before = vfs => {
 module.exports = (core) => {
   return {
     readdir: vfs => (monster) => before(vfs).then((swift) => readdir(monster, swift)),
-    mkdir: vfs => (monster) => before(vfs).then((swift) => mkdir(monster, swift)),
     readfile: vfs => (monster, options) => before(vfs).then((swift) => readfile(monster, options, swift)),
     writefile: vfs => (...args) => before(vfs).then((swift) => writefile(vfs, swift)(...args)),
-    unlink: vfs => (monster) => before(vfs).then((swift) => unlink(monster, swift)),
     copy: vfs => (from, to) => before(vfs).then((swift) => copy(from, to, swift)),
-    rename: vfs => (from, to, options) => before(vfs).then((swift) => rename(from, to, options, swift))
+    rename: vfs => (from, to, options) => before(vfs).then((swift) => rename(from, to, options, swift)),
+    mkdir: vfs => (monster) => before(vfs).then((swift) => mkdir(monster, swift)),
+    unlink: vfs => (monster) => before(vfs).then((swift) => unlink(monster, swift)),
+    stat: vfs => (monster) => before(vfs).then((swift) => stat(monster, swift))
   };
 };
