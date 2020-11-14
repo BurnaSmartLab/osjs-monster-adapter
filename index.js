@@ -85,7 +85,7 @@ const readdir = (monster, mon) => {
         * */
         let subdir = JSON.parse(result.message).filter(file => file.subdir);
         let clearedObjects = JSON.parse(result.message).filter(file => !subdir.some(value =>
-            ((typeof file.subdir === 'undefined') && (file.content_type === 'application/directory') && (value.subdir === `${file.name}/`)))
+          ((typeof file.subdir === 'undefined') && (file.content_type === 'application/directory') && (value.subdir === `${file.name}/`)))
         );
         return clearedObjects.map(file => {
           if (file.subdir) {
@@ -166,15 +166,15 @@ const unlink = (monster, mon) => {
     if ((monster.slice(-1) === '/') || isContainer) {
       // get sub objects of object we want delete it.
       await mon.getContainerObjectDetails(containerName(monster), 'application/json', '', prefix(monster)).then(
-          async (result) => {
-            let objects = JSON.parse(result.message).map(object => object.name);
-            if (objects.length > 0) {
-              // remove each object in array
-              for (let i = 0; i < objects.length; i++) {
-                await mon.removeObject(container, objects[i]).then(result => console.log(result));
-              }
+        async (result) => {
+          let objects = JSON.parse(result.message).map(object => object.name);
+          if (objects.length > 0) {
+            // remove each object in array
+            for (let i = 0; i < objects.length; i++) {
+              await mon.removeObject(container, objects[i]).then(result => console.log(result));
             }
-          });
+          }
+        });
       if (isContainer) {
         return mon.removeContainer(container).then(result => console.log(result));
       } else {
@@ -209,7 +209,7 @@ const copy = (from, to, mon) => {
       let fromContainerName = containerName(from);
       // get sub objects of object we want delete it.
       let objects = await mon.getContainerObjectDetails(fromContainerName, 'application/json', '', prefix(from)).then(
-          result => JSON.parse(result.message).map(object => `/${fromContainerName}/${object.name}`));
+        result => JSON.parse(result.message).map(object => `/${fromContainerName}/${object.name}`));
 
       if (objects.length > 0) {
         // copy each object in array
@@ -247,7 +247,7 @@ const rename = (from, to, options, mon) => {
       let fromContainerName = containerName(from);
       // get sub objects of object we want delete it.
       let objects = await mon.getContainerObjectDetails(fromContainerName, 'application/json', '', prefix(from)).then(
-          result => JSON.parse(result.message).map(object => `/${fromContainerName}/${object.name}`));
+        result => JSON.parse(result.message).map(object => `/${fromContainerName}/${object.name}`));
 
       if (objects.length > 0) {
         // copy each object in array
@@ -275,6 +275,17 @@ const stat = (monster, mon) => {
           'objectCount': result.responseHeader.objectCount,
           'bytesUsed': result.responseHeader.bytesUsed,
           'containerCount': result.responseHeader.containerCount
+        });
+      } else {
+        return {};
+      }
+    });
+  } else {
+    return mon.getContainerObjectDetails(containerName(monster), 'application/json', '/', prefix(monster)).then(result => {
+      if (result.status === 200) {
+        return ({
+          'objectCount': result.responseHeader.objectCount,
+          'bytesUsed': result.responseHeader.bytesUsed,
         });
       } else {
         return {};

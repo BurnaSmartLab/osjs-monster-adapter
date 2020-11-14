@@ -21,6 +21,10 @@ module.exports = class Container {
           if (this.status === 200 || this.status === 204) {
             resolve({
               'status': common.status,
+              'responseHeader':{
+                'objectCount': common.getResponseHeader('X-Container-Object-Count'),
+                'bytesUsed': common.getResponseHeader('X-Container-Bytes-Used')
+              },
               'message': common.responseText
             });
           } else if (this.status === 404) {
