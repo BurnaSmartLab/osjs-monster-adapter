@@ -3,7 +3,7 @@
 This is the SWIFT VFS (Server) Adapter for OS.js.
 
 ## Installation
-There are two approach to installing **swift vfs adapter**:
+There are two approaches to install **swift vfs adapter**:
 #### 1. Installing by using source:
 1- Go to below directory:
 
