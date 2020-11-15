@@ -2,6 +2,10 @@
 
 This is the SWIFT VFS (Server) Adapter for OS.js.
 
+## Prerequisites
+Install Openstack Swift All in One Deployment (SAIO) using this manual:
+
+https://docs.openstack.org/swift/latest/development_saio.html
 ## Installation
 There are two approaches to install **swift vfs adapter**:
 
