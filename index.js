@@ -280,6 +280,17 @@ const stat = (monster, mon) => {
         return {};
       }
     });
+  } else {
+    return mon.getContainerObjectDetails(containerName(monster), 'application/json', '/', prefix(monster)).then(result => {
+      if (result.status === 200) {
+        return ({
+          'objectCount': result.responseHeader.objectCount,
+          'bytesUsed': result.responseHeader.bytesUsed,
+        });
+      } else {
+        return {};
+      }
+    });
   }
 };
 // Makes sure we can make a request with what we have

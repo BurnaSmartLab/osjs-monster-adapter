@@ -3,7 +3,8 @@
 This is the SWIFT VFS (Server) Adapter for OS.js.
 
 ## Installation
-There are two approach to installing **swift vfs adapter**:
+There are two approaches to install **swift vfs adapter**:
+
 #### 1. Installing by using source:
 1- Go to below directory:
 
@@ -25,7 +26,9 @@ There are two approach to installing **swift vfs adapter**:
 
 `npm install`
 
+
 #### 2. Installing using npm dependency manager:
+
 Just execute bellow command:
 
 `npm i @burna/osjs-monster-adapter`
@@ -36,7 +39,7 @@ Just execute bellow command:
 // src/server/index.js
 
 // If first approach for installing has used:
-const monsterAdapter = require('./vfs/monster-adapter')
+const monsterAdapter = require('./vfs/osjs-monster-adapter')
 
 // If second approach for installing has used:
 // const monsterAdapter = require('@burna/osjs-monster-adapter')
