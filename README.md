@@ -24,9 +24,13 @@ There are two approaches to install **swift vfs adapter**:
 
 4- Clone adapter to this directory:
 
-`git clone https://opengit.ir/smartlab/hafez/monster-adapter.git`
+`git clone https://github.com/BurnaSmartLab/osjs-monster-adapter.git`
 
-5- At last use bellow command to install dependency:
+5- Then go to **osjs-monster-adapter** directory:
+
+`cd osjs-monster-adapter`
+
+6- At last use bellow command to install dependency:
 
 `npm install`
 
