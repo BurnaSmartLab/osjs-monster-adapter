@@ -147,7 +147,10 @@ const writefile = (vfs, mon) => (path, data, options) => {
   if (isContainerList(path)) {
     return Promise.reject(new Error('Invalid destination (You can not upload in container list)'));
   }
-  return mon.createObject(containerName(path), prefix(path), data).then(result => console.log(result));
+  return mon.createObject(containerName(path), prefix(path), data).then(result => {
+    console.log(result);
+    return result;
+  });
 };
 
 /*

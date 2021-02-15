@@ -170,7 +170,9 @@ module.exports = class Container {
       headers: {
         'X-Auth-Token': this.x_storage_token,
         'Content-Type': mime.getType(object),
-      }
+      },
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity
     }).then(response => {
       if (response.status === 201) {
         return ({
