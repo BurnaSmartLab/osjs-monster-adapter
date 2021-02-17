@@ -13,7 +13,7 @@ module.exports = class Container {
     let that = this;
     return new Promise(((resolve, reject) => {
       let common = new Common();
-      common.open('GET', `${that.x_storage_url}/${container}?delimiter=${delimiter}&prefix=${prefix}`, true);
+      common.open('GET', encodeURI(`${that.x_storage_url}/${container}?delimiter=${delimiter}&prefix=${prefix}`), true);
       common.setRequestHeader('X-Auth-Token', that.x_storage_token);
       common.setRequestHeader('Accept', content_type);
       common.onreadystatechange = function() {
@@ -43,7 +43,7 @@ module.exports = class Container {
     let that = this;
     return new Promise(((resolve, reject) => {
       let common = new Common();
-      common.open('HEAD', that.x_storage_url + '/' + container, true);
+      common.open('HEAD', encodeURI(that.x_storage_url + '/' + container), true);
       common.setRequestHeader('X-Auth-Token', that.x_storage_token);
       common.onreadystatechange = function() {
         if (this.readyState === 4) {
@@ -65,12 +65,14 @@ module.exports = class Container {
   }
 
   getObjectContent(container, object) {
-    return axios.get(`${this.x_storage_url}/${container}/${object}`, {
+    return axios.get(encodeURI(`${this.x_storage_url}/${container}/${object}`), {
       headers: {
-        'X-Auth-Token': this.x_storage_token
+        'X-Auth-Token': this.x_storage_token,
+        'Content-Disposition': 'attachment; filename*=utf-8\'\'' + decodeURI(object),
       },
       responseType: 'stream'
     }).then(response => {
+      console.log(response);
       if (response.status === 200) {
         return ({
           'status': response.status,
@@ -114,7 +116,7 @@ module.exports = class Container {
     let that = this;
     return new Promise(((resolve, reject) => {
       let common = new Common();
-      common.open('PUT', that.x_storage_url + '/' + container, true);
+      common.open('PUT', encodeURI(that.x_storage_url + '/' + container), true);
       common.setRequestHeader('X-Auth-Token', that.x_storage_token);
       common.setRequestHeader('Content-Length', '0');
       common.onreadystatechange = function() {
@@ -166,7 +168,7 @@ module.exports = class Container {
   }
 
   createObject(container, object, data) {
-    return axios.put(`${this.x_storage_url}/${container}/${object}`, data, {
+    return axios.put(encodeURI(`${this.x_storage_url}/${container}/${object}`), data, {
       headers: {
         'X-Auth-Token': this.x_storage_token,
         'Content-Type': mime.getType(object),
@@ -192,7 +194,7 @@ module.exports = class Container {
     let that = this;
     return new Promise(((resolve, reject) => {
       let common = new Common();
-      common.open('DELETE', that.x_storage_url + '/' + container, true);
+      common.open('DELETE', encodeURI(`${that.x_storage_url}/${container}`), true);
       common.setRequestHeader('X-Auth-Token', that.x_storage_token);
       common.onreadystatechange = function() {
         if (this.readyState === 4) {
@@ -217,7 +219,7 @@ module.exports = class Container {
     let that = this;
     return new Promise(((resolve, reject) => {
       let common = new Common();
-      common.open('DELETE', that.x_storage_url + '/' + container + '/' + object, true);
+      common.open('DELETE', encodeURI(that.x_storage_url + '/' + container + '/' + object), true);
       common.setRequestHeader('X-Auth-Token', that.x_storage_token);
       common.onreadystatechange = function() {
         if (this.readyState === 4) {
@@ -242,9 +244,9 @@ module.exports = class Container {
     let that = this;
     return new Promise(((resolve, reject) => {
       let common = new Common();
-      common.open('COPY', that.x_storage_url + source, true);
+      common.open('COPY', encodeURI(that.x_storage_url + source), true);
       common.setRequestHeader('X-Auth-Token', that.x_storage_token);
-      common.setRequestHeader('Destination', destination);
+      common.setRequestHeader('Destination', encodeURI(destination));
       common.onreadystatechange = function() {
         if (this.readyState === 4) {
           if (this.status === 201) {
