@@ -67,8 +67,7 @@ module.exports = class Container {
   getObjectContent(container, object) {
     return axios.get(encodeURI(`${this.x_storage_url}/${container}/${object}`), {
       headers: {
-        'X-Auth-Token': this.x_storage_token,
-        'Content-Disposition': 'attachment; filename*=utf-8\'\'' + decodeURI(object),
+        'X-Auth-Token': this.x_storage_token
       },
       responseType: 'stream'
     }).then(response => {
