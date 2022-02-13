@@ -19,7 +19,9 @@ module.exports = class Auth {
             headers.set('x_storage_token', common.getResponseHeader('X-Auth-Token'));
             resolve(headers);
           } else {
-            reject('an error accord.' + common.statusText);
+            const err = new Error(common.responseText);
+            err.code =  common.status;
+            reject(err);
           }
         }
       };

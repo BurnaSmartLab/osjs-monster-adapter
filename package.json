@@ -1,6 +1,6 @@
 {
   "name": "@burna/osjs-monster-adapter",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "An Adapter for os.js to work with swift saio object storage.",
   "main": "index.js",
   "files": [
@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "eslint": "eslint"
+    "eslint": "eslint index.js src"
   },
   "repository": {
     "type": "git",
@@ -33,7 +33,7 @@
   "homepage": "https://github.com/BurnaSmartLab/osjs-monster-adapter/blob/master/README.md",
   "author": "Morteza Javan, Seyed Milad Hashemi, Morteza Biabani",
   "license": "ISC",
-  "dependencies": {
+  " ": {
     "axios": "^0.19.2",
     "mime": "^2.4.6",
     "xmlhttprequest": "^1.8.0"

@@ -5,11 +5,15 @@ module.exports = class Account {
     this.x_storage_token = x_storage_token;
   }
 
-  accountDetails(content_type = 'text/plain; charset=utf-8', delimiter = '/') {
+  accountDetails(content_type = 'text/plain; charset=utf-8', options, delimiter = '/') {
     let that = this;
     return new Promise(((resolve, reject) => {
       let common = new Common();
-      common.open('GET', that.x_storage_url, true);
+      if(options.page) {
+        common.open('GET', encodeURI(`${that.x_storage_url}?limit=${options.page.size}&marker=${options.page.marker}`), true);
+      }else {
+        common.open('GET', that.x_storage_url, true);
+      }
       common.setRequestHeader('X-Auth-Token', that.x_storage_token);
       common.setRequestHeader('Accept', content_type);
       common.onreadystatechange = function() {
@@ -22,13 +26,13 @@ module.exports = class Account {
                 'bytesUsed': common.getResponseHeader('X-Account-Bytes-Used'),
                 'containerCount': common.getResponseHeader('X-Account-Container-Count'),
               },
-              'message':common.responseText
+              'message':common.responseText,
+              'code':common.status,
             });
           } else {
-            reject({
-              'status':common.status,
-              'message':'Error'
-            });
+            const err = new Error(common.responseText);
+            err.code =  common.status;
+            reject(err);
           }
         }
       };
@@ -37,7 +41,7 @@ module.exports = class Account {
   }
 };
 
-  /* accountDetails(content_type = "text/plain; charset=utf-8",delimiter = '/') {
+/* accountDetails(content_type = "text/plain; charset=utf-8",delimiter = '/') {
 
         let that = this
         return (async (that) => {

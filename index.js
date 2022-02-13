@@ -28,6 +28,7 @@
  * @author  BurnaSmartLab <javan.it@gmail.com, s.milad.hashemi@outlook.com, mortaza.biabani@gmail.com>
  * @licence Simplified BSD License
  */
+
 const path = require('path');
 
 const Monster = require('./src/Monster');
@@ -53,12 +54,28 @@ const isContainerList = dir => dir.split('/').length === 2;
 // get object name
 const objectName = dir => path.basename(dir);
 
-const readdir = (monster, mon) => {
+// Create error object and throw it
+const throwError = (error)=> {
+  throw error;
+};
+
+/*
+  * DESCRIPTION:
+  * this function returns an object which can tell the client what it's supposed to do
+  * as pagination, size of each page and sotring
+* */
+const capabilities = () => Promise.resolve({
+  sort:true,
+  pagination:true,
+  page_size: 100
+});
+
+const readdir = (monster, mon, options) => {
 // if checkMountPoint be empty it show us we are at root and need call accountDetails api
 // else we must list a contaienr objects or objects in a folder
   if (checkMountPoint(monster) === '') {
-    return mon.accountDetails('application/json').then(result => {
-      if (result.status === 200) {
+    return mon.accountDetails('application/json', options).then(result => {
+      if (result.code === 200) {
         return JSON.parse(result.message).map(container => ({
           isDirectory: true,
           isFile: false,
@@ -73,10 +90,10 @@ const readdir = (monster, mon) => {
       } else {
         return [];
       }
-    });
+    }).catch(err => throwError(err));
   } else {
-    return mon.getContainerObjectDetails(containerName(monster), 'application/json', '/', prefix(monster)).then(result => {
-      if (result.status === 200) {
+    return mon.getContainerObjectDetails(containerName(monster), 'application/json', '/', prefix(monster), options).then(result => {
+      if (result.code === 200) {
         /*
         * DESCRIPTION:
         * first compute subdir sub list
@@ -85,7 +102,7 @@ const readdir = (monster, mon) => {
         * */
         let subdir = JSON.parse(result.message).filter(file => file.subdir);
         let clearedObjects = JSON.parse(result.message).filter(file => !subdir.some(value =>
-            ((typeof file.subdir === 'undefined') && (file.content_type === 'application/directory') && (value.subdir === `${file.name}/`)))
+          ((typeof file.subdir === 'undefined') && (file.content_type === 'application/directory') && (value.subdir === `${file.name}/`)))
         );
         return clearedObjects.map(file => {
           if (file.subdir) {
@@ -113,7 +130,7 @@ const readdir = (monster, mon) => {
       } else {
         return [];
       }
-    });
+    }).catch(err => throwError(err));
   }
 
 };
@@ -131,26 +148,23 @@ const readdir = (monster, mon) => {
 const mkdir = (monster, mon) => {
   const container = containerName(monster);
   if (isContainerList(monster)) {
-    mon.createContainer(container);
+    return mon.createContainer(container).then(()=> true).catch(err => throwError(err));
   } else {
     let metadatas = new Map();
     metadatas.set('Content-Type', 'application/directory');
-    mon.createDirectory(container, monster.split('/').splice(2).join('/'), metadatas);
+    return mon.createDirectory(container, monster.split('/').splice(2).join('/'), metadatas).then(()=> true).catch(err => throwError(err));
   }
 };
 
 const readfile = (monster, options, mon) => {
-  return mon.getObjectContent(containerName(monster), prefix(monster)).then(result => result.message);
+  return mon.getObjectContent(containerName(monster), prefix(monster)).then(result => result.message).catch(err => throwError(err));
 };
 
 const writefile = (vfs, mon) => (path, data, options) => {
   if (isContainerList(path)) {
     return Promise.reject(new Error('Invalid destination (You can not upload in container list)'));
   }
-  return mon.createObject(containerName(path), prefix(path), data).then(result => {
-    console.log(result);
-    return result.status >= 200 && result.status < 300 ? 0 : 1;
-  });
+  return mon.createObject(containerName(path), prefix(path), data).then(()=> true).catch(err => throwError(err));
 };
 
 /*
@@ -161,33 +175,33 @@ const writefile = (vfs, mon) => (path, data, options) => {
   *
   * example 2: myMonster:/newDirectory/someObject is in 'newDirectory' container and we must delete 'someObject'
 * */
-const unlink = (monster, mon) => {
+const unlink = (monster, mon, options) => {
   return (async () => {
     let objectPath;
     let container = containerName(monster);
     let isContainer = isContainerList(monster);
     if ((monster.slice(-1) === '/') || isContainer) {
       // get sub objects of object we want delete it.
-      await mon.getContainerObjectDetails(containerName(monster), 'application/json', '', prefix(monster)).then(
-          async (result) => {
-            let objects = JSON.parse(result.message).map(object => object.name);
-            if (objects.length > 0) {
-              // remove each object in array
-              for (let i = 0; i < objects.length; i++) {
-                await mon.removeObject(container, objects[i]).then(result => console.log(result));
-              }
+      await mon.getContainerObjectDetails(containerName(monster), 'application/json', '', prefix(monster), options).then(
+        async (result) => {
+          let objects = JSON.parse(result.message).map(object => object.name);
+          if (objects.length > 0) {
+            // remove each object in array
+            for (let i = 0; i < objects.length; i++) {
+              await mon.removeObject(container, objects[i]).then(() => true).catch(err => throwError(err));
             }
-          });
+          }
+        }).catch(err => throwError(err));
       if (isContainer) {
-        return mon.removeContainer(container).then(result => console.log(result));
+        return mon.removeContainer(container).then(() => true).catch(err => throwError(err));
       } else {
         // remove '/' from end of directory we decide to delete it.
         objectPath = prefix(monster).slice(0, -1);
-        return mon.removeObject(container, objectPath).then(result => console.log(result));
+        return mon.removeObject(container, objectPath).then(()=> true).catch(err => throwError(err));
       }
     } else {
       objectPath = prefix(monster);
-      return mon.removeObject(container, objectPath).then(result => console.log(result));
+      return mon.removeObject(container, objectPath).then(()=> true).catch(err => throwError(err));
     }
   })();
 };
@@ -198,7 +212,7 @@ const unlink = (monster, mon) => {
    *
    * example: copy someObject.obj in myMonster:/container1/some/Path/someObject.obj to myMonster:/container2/some/Path/someObject.obj
    * */
-const copy = (from, to, mon) => {
+const copy = (from, to, mon, options) => {
   if (isContainerList(from)) {
     return Promise.reject(new Error('Invalid source (You can not COPY a container)'));
   } else if (isContainerList(to)) {
@@ -211,21 +225,21 @@ const copy = (from, to, mon) => {
     if (from.slice(-1) === '/') {
       let fromContainerName = containerName(from);
       // get sub objects of object we want delete it.
-      let objects = await mon.getContainerObjectDetails(fromContainerName, 'application/json', '', prefix(from)).then(
-          result => JSON.parse(result.message).map(object => `/${fromContainerName}/${object.name}`));
+      let objects = await mon.getContainerObjectDetails(fromContainerName, 'application/json', '', prefix(from), options).then(
+        result => JSON.parse(result.message).map(object => `/${fromContainerName}/${object.name}`)).catch(err => throwError(err));
 
       if (objects.length > 0) {
         // copy each object in array
         for (let i = 0; i < objects.length; i++) {
-          // /returns path where object must bu copied in destination
+          // returns path where object must be copied in destination
           let exentionPath = objects[i].split(sourcePath).splice(1);
-          mon.copyObject(objects[i], `${destinationPath}/${exentionPath}`).then(result => console.log(result));
+          await mon.copyObject(objects[i], `${destinationPath}/${exentionPath}`).then(()=> true).catch(err => throwError(err));
         }
       }
       // slice(0,-1) removes '/' from end of directory we decide to copy it.
-      return mon.copyObject(pathFromContainer(from).slice(0, -1), pathFromContainer(to)).then(result => console.log(result));
+      return mon.copyObject(pathFromContainer(from).slice(0, -1), pathFromContainer(to)).then(()=> true).catch(err => throwError(err));
     } else {
-      return mon.copyObject(sourcePath, destinationPath).then(result => result);
+      return mon.copyObject(sourcePath, destinationPath).then(()=> true).catch(err => throwError(err));
     }
   })();
 };
@@ -236,7 +250,7 @@ const copy = (from, to, mon) => {
   *
   * example: copy someObject.obj in myMonster:/container1/some/Path/someObject.obj to myMonster:/container2/some/Path/someObject.obj
   * */
-const rename = (from, to, options, mon) => {
+const rename = (from, to, mon, options) => {
   if (isContainerList(from)) {
     return Promise.reject(new Error('Invalid source (You can not COPY a container)'));
   } else if (isContainerList(to)) {
@@ -249,53 +263,76 @@ const rename = (from, to, options, mon) => {
     if (from.slice(-1) === '/') {
       let fromContainerName = containerName(from);
       // get sub objects of object we want delete it.
-      let objects = await mon.getContainerObjectDetails(fromContainerName, 'application/json', '', prefix(from)).then(
-          result => JSON.parse(result.message).map(object => `/${fromContainerName}/${object.name}`));
-
+      let objects = await mon.getContainerObjectDetails(fromContainerName, 'application/json', '', prefix(from), options).then(
+        result => JSON.parse(result.message).map(object => `/${fromContainerName}/${object.name}`)).catch(err => throwError(err));
       if (objects.length > 0) {
         // copy each object in array
         for (let i = 0; i < objects.length; i++) {
-          // /returns path where object must bu copied in destination
+          // returns path where object must bu copied in destination
           let exentionPath = objects[i].split(sourcePath).splice(1);
-          mon.copyObject(objects[i], `${destinationPath}/${exentionPath}`).then(result => console.log(result));
+          await mon.copyObject(objects[i], `${destinationPath}/${exentionPath}`).then((res)=> console.log(res)).catch(err => throwError(err));
         }
       }
       // slice(0,-1) removes '/' from end of directory we decide to copy it.
-      await mon.copyObject(pathFromContainer(from).slice(0, -1), pathFromContainer(to)).then(result => console.log(result));
+      await mon.copyObject(pathFromContainer(from).slice(0, -1), pathFromContainer(to)).then((res)=> console.log(res)).catch(err => throwError(err));
     } else {
-      await mon.copyObject(sourcePath, destinationPath).then(result => result);
+      await mon.copyObject(sourcePath, destinationPath).then((res)=> console.log(res)).catch(err => throwError(err));
     }
-    await unlink(from, mon);
+    await unlink(from, mon, options);
   })();
 };
 
 // returns directory or file stat
-const stat = (monster, mon) => {
+const stat = (monster, mon, options) => {
   if (checkMountPoint(monster) === '') {
-    return mon.accountDetails('application/json').then(result => {
-      if (result.status === 200) {
+    return mon.accountDetails('application/json', options).then(result => {
+      if (result.code === 200) {
+        let totalSize = 0;
+        let files = JSON.parse(result.message);
+        files.forEach(item => totalSize += item.bytes);
         return ({
           'objectCount': result.responseHeader.objectCount,
           'bytesUsed': result.responseHeader.bytesUsed,
-          'containerCount': result.responseHeader.containerCount
+          'containerCount': result.responseHeader.containerCount,
+          'totalCount' : files.length,
+          'totalSize' : totalSize
         });
       } else {
         return {};
       }
-    });
+    }).catch(err => throwError(err));
   } else {
-    return mon.getContainerObjectDetails(containerName(monster), 'application/json', '/', prefix(monster)).then(result => {
-      if (result.status === 200) {
+    return mon.getContainerObjectDetails(containerName(monster), 'application/json', '/', prefix(monster), options).then(result => {
+      if (result.code === 200) {
+        let files = JSON.parse(result.message);
+        let totalSize = 0;
+        if(!options.showHiddenFiles) {
+          files = files.filter(f => (f.name || f.subdir).substr(0, 1) !== '.');
+        }
+        let subdir = files.filter(file => file.subdir);
+        let clearedObjects = files.filter(file => !subdir.some(value =>
+          ((typeof file.subdir === 'undefined') && (file.content_type === 'application/directory') && (value.subdir === `${file.name}/`)))
+        );
+
+        files.forEach(item => item.bytes ? totalSize += item.bytes : null);
         return ({
           'objectCount': result.responseHeader.objectCount,
           'bytesUsed': result.responseHeader.bytesUsed,
+          'totalCount' : clearedObjects.length,
+          'totalSize' : totalSize
         });
       } else {
         return {};
       }
-    });
+    }).catch(err => throwError(err));
   }
 };
+
+// returns boolean of file existance
+const exists = (monster, mon) => {
+  return mon.getObjectMetadata(containerName(monster), prefix(monster)).then(() => true).catch(()=> false);
+};
+
 // Makes sure we can make a request with what we have
 const before = vfs => {
   let swift = new Monster(vfs.mount.attributes.endpoint);
@@ -304,13 +341,15 @@ const before = vfs => {
 
 module.exports = (core) => {
   return {
-    readdir: vfs => (monster) => before(vfs).then((swift) => readdir(monster, swift)),
+    capabilities: (vfs) => (monster, options) => capabilities(),
+    readdir: vfs => (monster, options) => before(vfs).then((swift) => readdir(monster, swift, options)),
     readfile: vfs => (monster, options) => before(vfs).then((swift) => readfile(monster, options, swift)),
     writefile: vfs => (...args) => before(vfs).then((swift) => writefile(vfs, swift)(...args)),
-    copy: vfs => (from, to) => before(vfs).then((swift) => copy(from, to, swift)),
-    rename: vfs => (from, to, options) => before(vfs).then((swift) => rename(from, to, options, swift)),
+    copy: vfs => (from, to, options) => before(vfs).then((swift) => copy(from, to, swift, options)),
+    rename: vfs => (from, to, options) => before(vfs).then((swift) => rename(from, to, swift, options)),
     mkdir: vfs => (monster) => before(vfs).then((swift) => mkdir(monster, swift)),
-    unlink: vfs => (monster) => before(vfs).then((swift) => unlink(monster, swift)),
-    stat: vfs => (monster) => before(vfs).then((swift) => stat(monster, swift))
+    unlink: vfs => (monster, options) => before(vfs).then((swift) => unlink(monster, swift, options)),
+    stat: vfs => (monster, options) => before(vfs).then((swift) => stat(monster, swift, options)),
+    exists: vfs => (monster) => before(vfs).then((swift) => exists(monster, swift))
   };
 };

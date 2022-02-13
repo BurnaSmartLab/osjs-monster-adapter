@@ -14,116 +14,91 @@ module.exports = class Monster {
   }
 
   async login(username = '', password = '') {
-    try {
+    return new Promise(((resolve, reject)=> {
       const $this = this;
-      const result = await this.auth.login(username, password);
-      $this.init(result.get('x_storage_url'), result.get('x_storage_token'), '/');
-    } catch (e) {
-      return e;
-    }
+      this.auth.login(username, password).then(res => {
+        $this.init(res.get('x_storage_url'), res.get('x_storage_token'), '/');
+        resolve();
+      }).catch(err=> reject(err));
+    }));
   }
 
-  async accountDetails(content_type = 'text/plain; charset=utf-8') {
-    try {
-      return await this.account.accountDetails(content_type);
-    } catch (e) {
-      return e;
-    }
+  async accountDetails(content_type = 'text/plain; charset=utf-8', options) {
+    return new Promise(((resolve, reject)=> {
+      this.account.accountDetails(content_type, options).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
 
-  async getContainerObjectDetails(container, content_type = 'text/plain; charset=utf-8', delimiter = '', prefix = '') {
-    try {
-      return await this.container.getContainerObjectDetails(container, content_type, delimiter, prefix);
-    } catch (e) {
-      return e;
-    }
+  async getContainerObjectDetails(container, content_type = 'text/plain; charset=utf-8', delimiter = '', prefix = '', options) {
+    return new Promise(((resolve, reject)=> {
+      this.container.getContainerObjectDetails(container, content_type, delimiter, prefix, options).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
 
   async getContainerMetadata(container) {
-    try {
-      return await this.container.getContainerMetadata(container);
-    } catch (e) {
-      return e;
-    }
+    return new Promise(((resolve, reject)=> {
+      this.container.getContainerMetadata(container).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
 
   async getObjectContent(container, object) {
-    try {
-      return await this.container.getObjectContent(container, object);
-    } catch (e) {
-      return e;
-    }
+    return new Promise(((resolve, reject)=> {
+      this.container.getObjectContent(container, object).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
 
   async getObjectMetadata(container, object) {
-    try {
-      return await this.container.getObjectMetadata(container, object);
-    } catch (e) {
-      return e;
-    }
+    return new Promise(((resolve, reject)=> {
+      this.container.getObjectMetadata(container, object).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
 
   async createContainer(container) {
-    try {
-      return await this.container.createContainer(container);
-    } catch (e) {
-      return e;
-    }
+    return new Promise(((resolve, reject)=> {
+      this.container.createContainer(container).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
 
   async createObject(container, object, data) {
-    try {
-      return await this.container.createObject(container, object, data);
-    } catch (e) {
-      return e;
-    }
+    return new Promise(((resolve, reject)=> {
+      this.container.createObject(container, object, data).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
+
   async createDirectory(container, object, metaDatas = []) {
-    try {
-      return await this.container.createDirectory(container, object, metaDatas);
-    } catch (e) {
-      return e;
-    }
+    return new Promise(((resolve, reject)=> {
+      this.container.createDirectory(container, object, metaDatas).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
 
   async removeContainer(container) {
-    try {
-      return await this.container.removeContainer(container);
-    } catch (e) {
-      return e;
-    }
+    return new Promise(((resolve, reject)=> {
+      this.container.removeContainer(container).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
 
   async removeObject(container, object) {
-    try {
-      return await this.container.removeObject(container, object);
-    } catch (e) {
-      return e;
-    }
+    return new Promise(((resolve, reject)=> {
+      this.container.removeObject(container, object).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
 
   async copyObject(source, destination) {
-    try {
-      return await this.container.copyObject(source, destination);
-    } catch (e) {
-      return e;
-    }
+    return new Promise(((resolve, reject)=> {
+      this.container.copyObject(source, destination).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
 
   async updateContainerMetadatas(container, metadatas) {
-    try {
-      return await this.container.updateContainerMetadata(container, metadatas);
-    } catch (e) {
-      return e;
-    }
+    return new Promise(((resolve, reject)=> {
+      this.container.updateContainerMetadata(container, metadatas).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
 
   async updateObjectMetadata(container, object, metadatas) {
-    try {
-      return await this.container.updateObjectMetadata(container, object, metadatas);
-    } catch (e) {
-      return e;
-    }
+    return new Promise(((resolve, reject)=> {
+      this.container.updateObjectMetadata(container, object, metadatas).then(res=> resolve(res)).catch(err=> reject(err));
+    }));
   }
 
 };

@@ -9,29 +9,32 @@ module.exports = class Container {
     this.x_storage_token = x_storage_token;
   }
 
-  getContainerObjectDetails(container, content_type = 'text/plain; charset=utf-8', delimiter = '', prefix) {
+  getContainerObjectDetails(container, content_type = 'text/plain; charset=utf-8', delimiter = '', prefix, options) {
     let that = this;
     return new Promise(((resolve, reject) => {
       let common = new Common();
-      common.open('GET', encodeURI(`${that.x_storage_url}/${container}?delimiter=${delimiter}&prefix=${prefix}`), true);
+      if(options.page) {
+        common.open('GET', encodeURI(`${that.x_storage_url}/${container}?limit=${options.page.size}&marker=${prefix + options.page.marker}&delimiter=${delimiter}&prefix=${prefix}`), true);
+      }else {
+        common.open('GET', encodeURI(`${that.x_storage_url}/${container}?delimiter=${delimiter}&prefix=${prefix}`), true);
+      }
       common.setRequestHeader('X-Auth-Token', that.x_storage_token);
       common.setRequestHeader('Accept', content_type);
       common.onreadystatechange = function() {
         if (this.readyState === 4) {
           if (this.status === 200 || this.status === 204) {
             resolve({
-              'status': common.status,
               'responseHeader':{
                 'objectCount': common.getResponseHeader('X-Container-Object-Count'),
                 'bytesUsed': common.getResponseHeader('X-Container-Bytes-Used')
               },
-              'message': common.responseText
+              'message': common.responseText,
+              'code': common.status
             });
           } else if (this.status === 404) {
-            reject({
-              'status': common.status,
-              'message': 'Error'
-            });
+            const err = new Error(common.responseText);
+            err.code =  common.status;
+            reject(err);
           }
         }
       };
@@ -49,14 +52,13 @@ module.exports = class Container {
         if (this.readyState === 4) {
           if (this.status === 204) {
             resolve({
-              'status': common.status,
-              'message': common.getAllResponseHeaders()
+              'message': common.getAllResponseHeaders(),
+              'code': common.status
             });
           } else {
-            reject({
-              'status': common.status,
-              'message': 'Error'
-            });
+            const err = new Error(common.responseText);
+            err.code =  common.status;
+            reject(err);
           }
         }
       };
@@ -65,25 +67,26 @@ module.exports = class Container {
   }
 
   getObjectContent(container, object) {
-    return axios.get(encodeURI(`${this.x_storage_url}/${container}/${object}`), {
-      headers: {
-        'X-Auth-Token': this.x_storage_token
-      },
-      responseType: 'stream'
-    }).then(response => {
-      console.log(response);
-      if (response.status === 200) {
-        return ({
-          'status': response.status,
-          'message': response.data
-        });
-      } else if (response.status === 404 || response.status === 416) {
-        return ({
-          'status': response.status,
-          'message': 'Error'
-        });
-      }
-    });
+    return new Promise(((resolve, reject) => {
+      axios.get(encodeURI(`${this.x_storage_url}/${container}/${object}`), {
+        headers: {
+          'X-Auth-Token': this.x_storage_token
+        },
+        responseType: 'stream'
+      }).then(response => {
+        if (response.status === 200) {
+          resolve ({
+            'message': response.data,
+            'code': response.status
+          });
+        }
+      }).catch(error=> {
+        const err = new Error(error.response.statusText);
+        err.code =  error.response.status;
+        reject(err);
+      });
+    }));
+
   }
 
   getObjectMetadata(container, object) {
@@ -96,14 +99,13 @@ module.exports = class Container {
         if (this.readyState === 4) {
           if (this.status === 200) {
             resolve({
-              'status': common.status,
-              'message': common.getAllResponseHeaders()
+              'message': common.getAllResponseHeaders(),
+              'code': common.status
             });
           } else {
-            reject({
-              'status': common.status,
-              'message': 'Error'
-            });
+            const err = new Error(common.responseText);
+            err.code =  common.status;
+            reject(err);
           }
         }
       };
@@ -122,14 +124,13 @@ module.exports = class Container {
         if (this.readyState === 4) {
           if (this.status === 201 || this.status === 202) {
             resolve({
-              'status': common.status,
-              'message': 'container added to monster-adapter successfully'
+              'message': 'container added to monster-adapter successfully',
+              'code': common.status
             });
           } else if (this.status === 400 || this.status === 404 || this.status === 507) {
-            reject({
-              'status': common.status,
-              'message': 'Error'
-            });
+            const err = new Error(common.responseText);
+            err.code =  common.status;
+            reject(err);
           }
         }
       };
@@ -151,14 +152,13 @@ module.exports = class Container {
         if (this.readyState === 4) {
           if (this.status === 201) {
             resolve({
-              'status': common.status,
-              'message': 'Object created successfully'
+              'message': 'Object created successfully',
+              'code': common.status
             });
           } else if (this.status === 404 || this.status === 408 || this.status === 411 || this.status === 422) {
-            reject({
-              'status': common.status,
-              'message': 'Error'
-            });
+            const err = new Error(common.responseText);
+            err.code =  common.status;
+            reject(err);
           }
         }
       };
@@ -167,26 +167,27 @@ module.exports = class Container {
   }
 
   createObject(container, object, data) {
-    return axios.put(encodeURI(`${this.x_storage_url}/${container}/${object}`), data, {
-      headers: {
-        'X-Auth-Token': this.x_storage_token,
-        'Content-Type': mime.getType(object),
-      },
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity
-    }).then(response => {
-      if (response.status === 201) {
-        return ({
-          'status': response.status,
-          'message': 'Object created successfully'
-        });
-      } else if (response.status === 404 || response.status === 408 || response.status === 411 || response.status === 422) {
-        return ({
-          'status': response.status,
-          'message': 'Error'
-        });
-      }
-    });
+    return new Promise(((resolve, reject) => {
+      return axios.put(encodeURI(`${this.x_storage_url}/${container}/${object}`), data, {
+        headers: {
+          'X-Auth-Token': this.x_storage_token,
+          'Content-Type': mime.getType(object),
+        },
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
+      }).then(response => {
+        if (response.status === 201) {
+          resolve ({
+            'message': 'Object created successfully',
+            'code': response.status
+          });
+        }
+      }).catch(error=> {
+        const err = new Error(error.response.statusText);
+        err.code =  error.response.status;
+        reject(err);
+      });
+    }));
   }
 
   removeContainer(container) {
@@ -199,14 +200,13 @@ module.exports = class Container {
         if (this.readyState === 4) {
           if (this.status === 204) {
             resolve({
-              'status': common.status,
-              'message': 'Container deleted successfully'
+              'message': 'Container deleted successfully',
+              'code': common.status
             });
           } else if (this.status === 404 || this.status === 409) {
-            reject({
-              'status': common.status,
-              'message': common.responseText
-            });
+            const err = new Error(common.responseText);
+            err.code =  common.status;
+            reject(err);
           }
         }
       };
@@ -224,14 +224,13 @@ module.exports = class Container {
         if (this.readyState === 4) {
           if (this.status === 204) {
             resolve({
-              'status': common.status,
-              'message': 'Object removed successfully'
+              'message': 'Object removed successfully',
+              'code': common.status
             });
-          } else if (this.status === 404 || this.status === 409) {
-            reject({
-              'status': common.status,
-              'message': common.responseText
-            });
+          } else {
+            const err = new Error(common.responseText);
+            err.code =  common.status;
+            reject(err);
           }
         }
       };
@@ -250,14 +249,13 @@ module.exports = class Container {
         if (this.readyState === 4) {
           if (this.status === 201) {
             resolve({
-              'status': common.status,
-              'message': 'Object copied successfully'
+              'message': 'Object copied successfully',
+              'code': common.status
             });
-          } else/* if (this.status === 404 || this.status === 409)*/{
-            reject({
-              'status': common.status,
-              'message': common.responseText
-            });
+          } else {
+            const err = new Error(common.responseText);
+            err.code =  common.status;
+            reject(err);
           }
         }
       };
@@ -278,14 +276,13 @@ module.exports = class Container {
         if (this.readyState === 4) {
           if (this.status === 204) {
             resolve({
-              'status': common.status,
-              'message': 'Container Metadata successfully'
+              'message': 'Container Metadata successfully',
+              'code': common.status
             });
-          } else if (this.status === 404) {
-            reject({
-              'status': common.status,
-              'message': 'Error'
-            });
+          } else {// if (this.status === 404) {
+            const err = new Error(common.responseText);
+            err.code =  common.status;
+            reject(err);
           }
         }
       };
@@ -306,14 +303,13 @@ module.exports = class Container {
         if (this.readyState === 4) {
           if (this.status === 202) {
             resolve({
-              'status': common.status,
-              'message': this.responseText
+              'message': this.responseText,
+              'code': common.status
             });
-          } else if (this.status === 404) {
-            reject({
-              'status': common.status,
-              'message': 'Error'
-            });
+          } else {// if (this.status === 404) {
+            const err = new Error(common.responseText);
+            err.code =  common.status;
+            reject(err);
           }
         }
       };
